@@ -1,8 +1,8 @@
 using Microsoft.Data.Sqlite;
 
-class ProductoRepository
+public class ProductoRepository
 {
-    string cadenaConexion = "Data Source=db/Tiendo.db";
+    string cadenaConexion = "Data Source=db/Tienda.db";
     public void CrearProducto(Productos producto)
     {
         string query = $"INSERT INTO Productos (Descripcion, Precio) VALUES (@descrip, @precio);";

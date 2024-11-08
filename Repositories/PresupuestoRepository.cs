@@ -1,7 +1,7 @@
 using Microsoft.Data.Sqlite;
-class PresupuestoRepository
+public class PresupuestoRepository
 {
-    string cadenaConexion = "Data Source=db/Tiendo.db";
+    string cadenaConexion = "Data Source=db/Tienda.db";
     public bool CrearPresupuesto(Presupuestos presupuesto)
     {
         ProductoRepository repoProductos = new ProductoRepository();
@@ -52,13 +52,12 @@ class PresupuestoRepository
 
     public List<Presupuestos> GetPresupuestos()
     {
-        string queryDetalle = @"SELECT idPresupuesto, NombreDestinatario, FROM Presupuestos";
+        string queryDetalle = @"SELECT * FROM Presupuestos";
         List<Presupuestos> presupuestos = new List<Presupuestos>();
         using (SqliteConnection sqlitecon = new SqliteConnection(cadenaConexion))
-        {
+        {   
             SqliteCommand command = new SqliteCommand(queryDetalle, sqlitecon);
             sqlitecon.Open();
-
 
             using (SqliteDataReader reader = command.ExecuteReader())
             {
@@ -78,7 +77,7 @@ class PresupuestoRepository
 
     public Productos getDetalle(int id)
     {
-        string query = @"SELECT pr.idProd, prod.Descripcion, prod.Precio FROM PresupuestosDetaller as pr INNER JOIN Productos as prod WHERE idPresupuesto = @idquery";
+        string query = @"SELECT pr.idProd, prod.Descripcion, prod.Precio FROM PresupuestosDetalle as pr INNER JOIN Productos as prod WHERE idPresupuesto = @idquery";
         Productos buscado = new Productos();
         using (SqliteConnection sqlitecon = new SqliteConnection(cadenaConexion))
         {
@@ -206,5 +205,42 @@ class PresupuestoRepository
             connection.Close();
         }
         return true;
+    }
+
+     public void ModificarPresupuesto(Presupuestos presupuesto)
+    {
+        using (SqliteConnection connection = new SqliteConnection(cadenaConexion))
+        {
+            var query = "UPDATE Presupuestos SET NombreDestinatario = @NombreDestinatario, FechaCreacion = @FechaCreacion WHERE IdPresupuesto = @IdPresupuesto";
+            connection.Open();
+            var command = new SqliteCommand(query, connection);
+            command.Parameters.AddWithValue("@NombreDestinatario", presupuesto.NombreDestinatario);
+            command.Parameters.AddWithValue("@FechaCreacion", presupuesto.FechaCreacion);
+            command.Parameters.AddWithValue("@IdPresupuesto", presupuesto.IdPresupuesto);
+            command.ExecuteNonQuery();
+            connection.Close();
+        }
+
+        // Actualizar los detalles del presupuesto
+        foreach (var detalle in presupuesto.Detalle)
+        {
+            // Llamar al método modificado con los parámetros necesarios
+            ModificarDetallePresupuesto(presupuesto.IdPresupuesto, detalle.Producto, detalle.Cantidad);
+        }
+    }
+
+     private void ModificarDetallePresupuesto(int idPresupuesto, Productos producto, int cantidad)
+    {
+        using (SqliteConnection connection = new SqliteConnection(cadenaConexion))
+        {
+            var query = "UPDATE PresupuestosDetalle SET Cantidad = @Cantidad WHERE IdPresupuesto = @IdPresupuesto AND IdProducto = @IdProducto";
+            connection.Open();
+            var command = new SqliteCommand(query, connection);
+            command.Parameters.AddWithValue("@Cantidad", cantidad);
+            command.Parameters.AddWithValue("@IdPresupuesto", idPresupuesto);
+            command.Parameters.AddWithValue("@IdProducto", producto.IdProducto);
+            command.ExecuteNonQuery();
+            connection.Close();
+        }
     }
 }
